@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Chống Lừa Đảo - SafeAlert</title>
+  <meta name="description" content="Cổng thông tin cảnh báo và phòng chống lừa đảo - màu sáng, nền trắng, giao diện trực quan." />
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root{
+      --bg: #ffffff;
+      --text: #0f1724;
+      --muted: #6b7280;
+      --accent1: #06b6d4; /* teal */
+      --accent2: #ff7a59; /* orange */
+      --accent3: #7c3aed; /* purple */
+      --card: #f8fafc;
+      --success: #10b981;
+      --danger: #ef4444;
+      --glass: rgba(12,18,28,0.03);
+      --radius: 12px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      line-height:1.45;
+      padding:28px;
+    }
+
+    /* Container */
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr;gap:20px}
+
+    /* Header */
+    header{
+      display:flex;align-items:center;justify-content:space-between;gap:16px;
+    }
+    .brand{display:flex;align-items:center;gap:14px}
+    .logo{
+      width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--accent1),var(--accent3));
+      display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:22px;
+      box-shadow:0 6px 18px rgba(12,18,28,0.08);
+    }
+    .site-title{font-size:20px;font-weight:700}
+    .site-sub{font-size:12px;color:var(--muted);margin-top:2px}
+
+    /* Header right actions */
+    .actions{display:flex;gap:10px;align-items:center}
+    .btn{
+      border:0;padding:10px 14px;border-radius:10px;font-weight:600;cursor:pointer;
+      background:var(--accent1);color:white;box-shadow:0 6px 14px rgba(6,182,212,0.12);
+    }
+    .btn.outline{background:white;border:1px solid var(--glass);color:var(--text);}
+
+    /* Hero / Search */
+    .hero{
+      display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start;
+    }
+    .card{
+      background:var(--card);border-radius:var(--radius);padding:18px;box-shadow:0 6px 18px rgba(12,18,28,0.04);
+    }
+    .search{
+      display:flex;gap:8px;align-items:center;
+    }
+    .search input{flex:1;padding:12px 14px;border-radius:10px;border:1px solid #e6eef3;font-size:14px}
+    .search .go{padding:10px 12px;border-radius:10px;border:0;background:var(--accent2);color:white;font-weight:700;cursor:pointer}
+
+    .quick-stats{display:flex;flex-direction:column;gap:12px}
+    .stat{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;border-radius:10px;background:linear-gradient(90deg, rgba(255,255,255,0.6), rgba(255,255,255,0.2));
+    }
+    .stat .label{font-size:13px;color:var(--muted)}
+    .stat .num{font-weight:800;font-size:20px;color:var(--text)}
+
+    /* Main layout */
+    .main-grid{
+      display:grid;grid-template-columns: 1fr 360px;gap:20px;
+    }
+
+    /* Alerts list */
+    .alerts .alert-item{
+      display:flex;gap:12px;background:linear-gradient(90deg,#fff,#fbfdff);padding:12px;border-radius:12px;margin-bottom:12px;align-items:flex-start;border:1px solid #f1f5f9;
+    }
+    .alerts .rank{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;color:white}
+    .alerts .rank.high{background:linear-gradient(135deg,var(--danger),#ff9a9a)}
+    .alerts .rank.mid{background:linear-gradient(135deg,var(--accent2),#ffd1c6)}
+    .alerts .meta{flex:1}
+    .alerts .meta h4{margin:0 0 6px 0;font-size:15px}
+    .alerts .meta p{margin:0;color:var(--muted);font-size:13px}
+
+    /* Common scams */
+    .scams-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    .scam-card{padding:12px;border-radius:12px;background:linear-gradient(180deg,#fff,#fff);border:1px solid #f3f4f6}
+    .scam-card h5{margin:0 0 8px}
+    .scam-card p{margin:0;color:var(--muted);font-size:13px}
+
+    /* Tips */
+    .tips li{margin-bottom:10px;padding-left:12px}
+
+    /* Report form */
+    form .field{margin-bottom:12px}
+    form label{display:block;font-weight:700;margin-bottom:6px;font-size:13px}
+    form input, form textarea, form select{
+      width:100%;padding:10px;border-radius:10px;border:1px solid #e6eef3;font-size:13px;
+    }
+    .hint{font-size:12px;color:var(--muted)}
+
+    /* Footer */
+    footer{display:flex;justify-content:space-between;align-items:center;padding:16px;border-radius:12px;background:linear-gradient(180deg,#fbfbff,#fff);border:1px solid #f3f4f6}
+
+    /* Responsive */
+    @media (max-width:960px){
+      .hero{grid-template-columns:1fr}
+      .main-grid{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true">SA</div>
+        <div>
+          <div class="site-title">SafeAlert</div>
+          <div class="site-sub">Cổng cảnh báo & phòng chống lừa đảo</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn" id="reportQuick">Báo ngay</button>
+        <button class="btn outline" id="aboutBtn">Về chúng tao</button>
+      </div>
+    </header>
+
+    <!-- Hero / Search -->
+    <section class="hero">
+      <div class="card">
+        <h2 style="margin-top:0">Kiểm tra & Cảnh báo nhanh 🔎</h2>
+        <p style="color:var(--muted);margin:6px 0 14px">Dán link, số điện thoại hoặc mô tả ngắn về tình huống để tìm cảnh báo có liên quan.</p>
+        <div class="search" role="search">
+          <input id="searchInput" placeholder="Dán link / số điện thoại / từ khóa..." />
+          <button class="go" id="searchBtn">Tìm</button>
+        </div>
+
+        <div style="margin-top:14px" id="searchResults" aria-live="polite"></div>
+
+        <hr style="border:none;height:1px;background:#eef2f6;margin:18px 0;border-radius:2px" />
+
+        <div style="display:flex;gap:12px">
+          <div style="flex:1">
+            <div style="font-size:12px;color:var(--muted)">Cảnh báo mới</div>
+            <div style="font-weight:800;font-size:20px">12 vụ</div>
+          </div>
+          <div style="flex:1">
+            <div style="font-size:12px;color:var(--muted)">Đã xác minh</div>
+            <div style="font-weight:800;font-size:20px;color:var(--success)">7 vụ</div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="card quick-stats" aria-label="Thống kê nhanh">
+        <div class="stat">
+          <div>
+            <div class="label">Số vụ tuần này</div>
+            <div class="num" id="weekCount">12</div>
+          </div>
+          <div style="text-align:right">
+            <small class="hint">+30% so với tuần trước</small>
+          </div>
+        </div>
+
+        <div class="stat">
+          <div>
+            <div class="label">Cảnh báo cao</div>
+            <div class="num" id="highCount">4</div>
+          </div>
+          <div>
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style="opacity:0.9">
+              <path d="M12 2L2 7l10 5 10-5-10-5z" fill="url(#g1)"/>
+              <defs><linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#ff7a59"/><stop offset="1" stop-color="#7c3aed"/></linearGradient></defs>
+            </svg>
+          </div>
+        </div>
+
+        <div class="stat">
+          <div>
+            <div class="label">Báo cáo hôm nay</div>
+            <div class="num" id="todayReports">3</div>
+          </div>
+          <div>
+            <button class="btn outline" id="seeReports">Xem báo cáo</button>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <!-- Main content -->
+    <section class="main-grid">
+      <div>
+        <!-- Alerts -->
+        <div class="card alerts" aria-labelledby="alerts-title">
+          <h3 id="alerts-title">Danh sách cảnh báo mới ⚠️</h3>
+
+          <div id="alertsList">
+            <!-- alert items inserted by JS -->
+          </div>
+
+        </div>
+
+        <!-- Common scams -->
+        <div style="margin-top:16px" class="card">
+          <h3>Chiêu lừa đảo phổ biến 💡</h3>
+          <div class="scams-grid" id="scamsGrid">
+            <!-- scam cards inserted by JS -->
+          </div>
+        </div>
+
+        <!-- Tips -->
+        <div style="margin-top:16px" class="card">
+          <h3>Tips phòng tránh ngắn gọn</h3>
+          <ul class="tips">
+            <li>Không click link lạ — ngay cả khi được bạn bè gửi (có thể bị hack account).</li>
+            <li>Không chuyển tiền khi chưa xác minh chính chủ, yêu cầu gọi điện video để đối chiếu.</li>
+            <li>Kiểm tra tên miền kỹ: lừa đảo hay dùng tên miền gần giống (1 chữ cái khác).</li>
+            <li>Dùng xác thực 2 lớp (2FA) cho email và ví/ứng dụng ngân hàng.</li>
+            <li>Bảo quản ảnh/chứng từ cá nhân, không chia sẻ công khai.</li>
+          </ul>
+        </div>
+      </div>
+
+      <aside>
+        <!-- Report form -->
+        <div class="card" id="reportCard">
+          <h3>Báo cáo vụ lừa đảo 📝</h3>
+          <p class="hint">Gửi thông tin để ban quản trị kiểm tra (dữ liệu demo, không gửi mật khẩu).</p>
+          <form id="reportForm">
+            <div class="field">
+              <label for="type">Loại vụ</label>
+              <select id="type" required>
+                <option value="link">Link lừa đảo</option>
+                <option value="sms">SMS / Số điện thoại</option>
+                <option value="voice">Gọi thoại</option>
+                <option value="app">Ứng dụng giả mạo</option>
+                <option value="other">Khác</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="contact">Số điện thoại / Link / Tên đối tượng</label>
+              <input id="contact" placeholder="vd: https://scam.example / 0912xxx / FB: abc" required />
+            </div>
+            <div class="field">
+              <label for="desc">Mô tả ngắn</label>
+              <textarea id="desc" rows="4" placeholder="Mô tả diễn tiến, nội dung lừa đảo..." required></textarea>
+            </div>
+            <div class="field">
+              <label for="severity">Mức độ nghiêm trọng</label>
+              <select id="severity">
+                <option value="low">Thấp</option>
+                <option value="medium" selected>Trung bình</option>
+                <option value="high">Cao</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button class="btn" type="submit">Gửi báo cáo</button>
+              <button class="btn outline" type="button" id="resetForm">Xóa</button>
+            </div>
+          </form>
+          <div id="formMsg" style="margin-top:10px;font-size:13px;color:var(--muted)"></div>
+        </div>
+
+        <!-- Stats -->
+        <div style="margin-top:14px" class="card">
+          <h3>Thống kê nhanh</h3>
+          <canvas id="donutChart" width="320" height="240" style="max-width:100%"></canvas>
+          <small class="hint">Phân bố theo loại vụ (demo)</small>
+        </div>
+
+        <div style="margin-top:12px" class="card">
+          <h3>Liên hệ khẩn</h3>
+          <p class="hint" style="margin:6px 0">Call: <strong>1900-000-000</strong><br/>Email: <strong>report@safealert.local</strong></p>
+          <p class="hint" style="margin:6px 0">Nếu mất tiền: liên hệ ngay ngân hàng + cơ quan công an.</p>
+        </div>
+      </aside>
+    </section>
+
+    <footer>
+      <div>© <strong>SafeAlert</strong> — Sản phẩm của nhóm 8</div>
+      <div style="color:var(--muted);font-size:13px">Cập nhật: <span id="updatedDate"></span></div>
+    </footer>
+  </div>
+
+  <script>
+    // Demo data
+    const alerts = [
+      {id:1,title:"Website giả mạo ngân hàng ABC",desc:"Link giả mạo yêu cầu nhập OTP. Người dùng mất tiền.",sev:"high"},
+      {id:2,title:"SMS tuyển dụng lừa chuyển phí",desc:"Yêu cầu nộp phí trước khi nhận việc.",sev:"medium"},
+      {id:3,title:"Lừa mua bán đồ second-hand",desc:"Chuyển tiền trước, mất liên lạc.",sev:"medium"},
+      {id:4,title:"Gọi mạo danh cơ quan thuế",desc:"Đòi phạt, yêu cầu chuyển tiền ngay.",sev:"high"},
+      {id:5,title:"App giả mạo ví điện tử",desc:"Ứng dụng copy giao diện, yêu cầu login.",sev:"high"}
+    ];
+
+    const scams = [
+      {title:"Giả mạo ngân hàng",text:"Email/website giống thật, yêu cầu OTP hoặc chuyển tiền."},
+      {title:"Quà tặng trúng thưởng",text:"Yêu cầu đóng phí/thuế để nhận thưởng."},
+      {title:"Tuyển dụng lừa đảo",text:"Yêu cầu nộp tiền 'xác thực' hoặc mua kit."},
+      {title:"Mạo danh người thân",text:"Gọi xin tiền khẩn cấp, kèm số lạ."}
+    ];
+
+    // Render alerts
+    const alertsList = document.getElementById('alertsList');
+    function renderAlerts(list){
+      alertsList.innerHTML = '';
+      list.forEach(a=>{
+        const div = document.createElement('div');
+        div.className = 'alert-item';
+        const rankClass = a.sev==='high' ? 'high' : (a.sev==='medium' ? 'mid' : '');
+        div.innerHTML = `
+          <div class="rank ${rankClass}" aria-hidden="true">${a.sev==='high'?'H':''}${a.sev==='medium'?'M':''}</div>
+          <div class="meta">
+            <h4>${escapeHtml(a.title)}</h4>
+            <p>${escapeHtml(a.desc)}</p>
+            <small class="hint">ID: ${a.id} • Mức: ${a.sev}</small>
+          </div>
+        `;
+        alertsList.appendChild(div);
+      });
+    }
+    renderAlerts(alerts);
+
+    // Render scams
+    const scamsGrid = document.getElementById('scamsGrid');
+    scams.forEach(s=>{
+      const c = document.createElement('div');
+      c.className = 'scam-card';
+      c.innerHTML = `<h5>${escapeHtml(s.title)}</h5><p>${escapeHtml(s.text)}</p>`;
+      scamsGrid.appendChild(c);
+    });
+
+    // Escape helper
+    function escapeHtml(s){return String(s).replace(/[&<>"']/g, (m)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+
+    // Search functionality (simple)
+    document.getElementById('searchBtn').addEventListener('click', doSearch);
+    document.getElementById('searchInput').addEventListener('keydown', e=>{ if(e.key==='Enter') doSearch(); });
+    function doSearch(){
+      const q = document.getElementById('searchInput').value.trim().toLowerCase();
+      const out = document.getElementById('searchResults');
+      if(!q){ out.innerHTML = '<p class="hint">Nhập từ khóa để tìm (ví dụ: link, 0912xxx, tên dịch vụ).</p>'; return; }
+      const found = alerts.filter(a=> (a.title+a.desc).toLowerCase().includes(q) );
+      if(found.length===0){
+        out.innerHTML = `<p class="hint">Không tìm thấy cảnh báo khớp. Vui lòng gửi báo cáo giúp cộng đồng.</p>`;
+      } else {
+        out.innerHTML = `<div style="margin-top:8px">${found.map(f=>`<div style="padding:8px;border-radius:8px;background:#fff;border:1px solid #f3f4f6;margin-bottom:8px"><strong>${escapeHtml(f.title)}</strong><div style="color:var(--muted)">${escapeHtml(f.desc)}</div></div>`).join('')}</div>`;
+      }
+    }
+
+    // Form handling (simulated)
+    const reportForm = document.getElementById('reportForm');
+    reportForm.addEventListener('submit', e=>{
+      e.preventDefault();
+      const type = document.getElementById('type').value;
+      const contact = document.getElementById('contact').value.trim();
+      const desc = document.getElementById('desc').value.trim();
+      const severity = document.getElementById('severity').value;
+
+      if(!contact || !desc){ showMsg('Vui lòng điền đủ thông tin.', true); return; }
+
+      // Simulate adding to alerts (demo)
+      const newId = alerts.length + 1;
+      alerts.unshift({id:newId,title:`[Báo cáo] ${contact}`,desc:desc,sev:severity});
+      renderAlerts(alerts.slice(0,6));
+      updateStats();
+      showMsg('Cảm ơn! Báo cáo đã được ghi nhận (demo).', false);
+      reportForm.reset();
+    });
+
+    document.getElementById('resetForm').addEventListener('click', ()=>{ reportForm.reset(); document.getElementById('formMsg').textContent=''; });
+
+    function showMsg(msg,isError){
+      const el = document.getElementById('formMsg');
+      el.textContent = msg;
+      el.style.color = isError ? 'var(--danger)' : 'var(--success)';
+      setTimeout(()=>{ el.textContent=''; }, 5000);
+    }
+
+    // Charts
+    const donutCtx = document.getElementById('donutChart').getContext('2d');
+    let donutChart;
+    function updateStats(){
+      const counts = {link:0,sms:0,voice:0,app:0,other:0};
+      alerts.forEach(a=>{
+        const t = (a.title||'').toLowerCase();
+        if(a.sev==='high') counts.link++;
+        else counts.sms++;
+      });
+      // For demo, random-ish numbers
+      const data = [Math.max(1, Math.round(Math.random()*8)), Math.max(1,Math.round(Math.random()*6)), Math.max(1,Math.round(Math.random()*4))];
+      if(donutChart) donutChart.data.datasets[0].data = data, donutChart.update();
+      else donutChart = new Chart(donutCtx, {
+        type:'doughnut',
+        data:{
+          labels:['Giả mạo ngân hàng','Tuyển dụng / SMS','App & Khác'],
+          datasets:[{
+            data:data,
+            backgroundColor:['#ff7a59','#06b6d4','#7c3aed'],
+            borderWidth:0
+          }]
+        },
+        options:{
+          responsive:true,
+          plugins:{legend:{position:'bottom'}},
+          cutout:'60%'
+        }
+      });
+    }
+    updateStats();
+
+    // Footer date
+    document.getElementById('updatedDate').textContent = new Date().toLocaleString();
+
+    // Quick buttons
+    document.getElementById('reportQuick').addEventListener('click', ()=>{
+      document.getElementById('contact').focus();
+      window.scrollTo({top:document.getElementById('reportCard').offsetTop - 20,behavior:'smooth'});
+    });
+    document.getElementById('aboutBtn').addEventListener('click', ()=>alert('SafeAlert — cổng demo phòng chống lừa đảo. Không phải hệ thống chính thức.'));
+    document.getElementById('seeReports').addEventListener('click', ()=>alert('Danh sách báo cáo demo (hiển thị trên UI).'));
+
+    // initial search hint
+    document.getElementById('searchResults').innerHTML = '<p class="hint">Thử tìm: "ngân hàng", "0912", "ứng dụng"...</p>';
+  </script>
+</body>
+</html>
